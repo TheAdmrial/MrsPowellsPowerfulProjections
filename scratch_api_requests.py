@@ -36,6 +36,8 @@ print(response.text)
 - The message that I got back was a "401 Unauthorized" error. 
 - Next, I'll try getting a Auth key and try the same request. 
 - Just submitted my application so I can try and get an Auth key. 
+- 4/23/2022 - No account verification yet. 
+
 
 - I will be looking at the webscrape route while I wait...
 - I can scrape individual orders and get line items with times and totals. 
