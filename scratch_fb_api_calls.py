@@ -5,6 +5,11 @@ from datetime import datetime, timedelta
 import facebook
 import json
 import pandas as pd
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+import os
+from dotenv import load_dotenv
+import time
 
 #%%
 '''
@@ -20,9 +25,9 @@ I'll check back in a couple of days to see if there has been any movement.
 This code chunk has an api code that has already expired
 '''
 # making a get request
-# app_id = '5044226898989028'
-# secret_app_id = '4628fe4fbeb89a91f81b622b760d5e49'
-# st_token = 'EABHrsph7DZBQBAOXC6TObaAui8xEVcZASpfEUXqeTP4ZA964cvTZCzMjU5vxTAJdTVkGHYFjBfGd8plkXBNjFPgZAeGvvZAv9yZClIAS5fvHdfgx2JZA1lbcMtkTy97FKtt4NEcXt0IRlZCtLIE8ZAWEETfo3FGkG46ZAbgqXQvR6KA467ZAaiAwfvZAXZBIR6edv3OVLk8s8FgUqxSQFYI44C0VH158vXGpJlOMgZD'
+# app_id = ''
+# secret_app_id = ''
+# st_token = ''
 
 
 
@@ -30,15 +35,28 @@ This code chunk has an api code that has already expired
 
 # print(response.text)
 #%%
-# requesting access to Mrs. Powell's Ammon's page. 
-lt_token = 'EABHrsph7DZBQBAKxgKEgLMws8H1EvexlzomYObz7xWn8sPt8DbxdMyuZAMTgMLBeFkQ6zbYItzFHzmm0FFOIaXsGUi7P0hydufvCa56y4IgxgC18eiGMiY1Qr13VZAmuTbzdZC4shUPeHaeCoAZCcgSj9owCs4kBTWHslMBpk4ooDcZBh2OSWz'
-mrspowellsIF = 'mrspowells'
-mrspowellsREX = 'mrspowellsrexburg'
-mrspowellsRIG = 'mrspowellsrigby'
-IFapikey = "EABHrsph7DZBQBAIGZBwsdIkpp9mcEd7aOtXEnNMd8McoBaALAFcXl89OPaPoSWgZAAZBRs4RORMXOqHzKKw2BxXja70vQWmCrKVoC49b2ujOVsmxC4KxHoPZBiMzJKLa5mZCEut9jhNEyaFa3EK2zjlE3cSyAoLbvH4kWaaZBocG3CNSNEFEwal1dmi1PMrSDEZD"
-REXapikey = "EABHrsph7DZBQBAG0RsoAkGEIxbe9ZANs1OkYKY9hD0ZA8GjEudr6508dAXRDJbJHjPyt9NPjV03CoCnbdVOqG6REctiFhNF185UxVV7GnD8ZAcqzcivaZCjCXbkiIOgiG2lrJ68481oWkyh8ql1G7rUAuaJhXuKpGIZCAx9RNZC8yN34SZCln9iZAC9T58ubD66AZD"
-RIGapikey = "EABHrsph7DZBQBANNuElLPE4rcrWGIxR05ojek1Eh5BnsB7GcgRZCb8ToK5OGsh2U9HQBoChX5l6qF03FMZCMvTlZCgHZB29W2vSoXRBktghRHwGzSskephkhNpJSTTvrQzEZAGQ1xiEsJJEuYPYAsEVMiPqa3BAAy3KrIozxgKG1fSK4TxB5yQAhYWVDPoXDkZD"
+# getting api keys into the working environment 
+load_dotenv()
+lt_token = os.getenv('lt_token')
 
+IFapikey = os.environ.get('if_api_key')
+REXapikey = os.getenv('rex_api_key')
+RIGapikey = os.getenv('rig_api_key')
+
+mrspowellsIF = os.getenv('mrs_powells_if_id')
+mrspowellsREX = os.getenv('mrs_powells_rex_id')
+mrspowellsRIG = os.getenv('mrs_powells_rig_id')
+
+#%%
+base_url = 'https://graph.facebook.com/'
+
+comment_id ='119294611448224_5312435448800755'
+fields_url ='?fields=id,created_time,message,comments{comment_count,id,user_likes},likes'
+
+#%%
+comment_response = requests.get(base_url + mrspowellsIF + '/' + comment_id + fields_url)
+
+print(comment_response.text)
 #%%
 IFresponce = requests.get('https://graph.facebook.com/' + mrspowellsIF + '?fields=access_token&access_token=' + lt_token)
 
@@ -64,15 +82,46 @@ fields = ','.join(fields)
 page = graph.get_object(mrspowellsIF, fields = fields)
 print(json.dumps(page, indent = 4))
 #%%
-
+# finding the post id
 page['posts']['data'][0]['id']
+# finging the next page
+next_page=page['posts']['paging']['next']
 #%%
-if_post_dat = pd.read_json(pd.json_normalize(page))
-if_dat = pd.json_normalize(if_post_dat.data)
-if_dat
+# if_post_dat = pd.read_json(page)
+if_dat = pd.json_normalize(page)
+post_dat= pd.DataFrame(if_dat['posts.data'][0])
+post_dat.head()
 #%%
 '''
 I am able to get all the posts and post id's for the last year for the Mrs.
 Powell's. Next I need to make a data set of that info and loop through the id's 
 in the facebook api to grab the likes, comments and shares.  
 '''
+#%%
+post_dat.id[0]
+#%%
+'''
+This will be my first attempt at getting the all the posts (for the last year)
+for the store in IF. 
+1) I will be using a while loop to continue until the 'next' is blank. 
+2) for each page, I will be concating together the data that is grabbed 
+from the api and adding that to the bottom of the data set
+3) I will add sleeps to that there are not too many api calls per second. 
+'''
+#%%
+loops = 0
+while next_page != '':
+    page1=graph.get_object(mrspowellsIF, page = next_page, fields = fields)
+    print('made a call to facebook')
+    print()
+    next_page=page['posts']['paging']['next']
+    if_posts=pd.json_normalize(page1)
+    post_dat1=pd.DataFrame(if_posts['posts.data'][0])
+    if_post_dat=pd.concat([post_dat, post_dat1])
+    loops += 1
+    print('just added the new data to the old data')
+    print(f'times through: {loops}')
+    time.sleep(15)
+#%%
+if_post_dat.tail()
+# %%
