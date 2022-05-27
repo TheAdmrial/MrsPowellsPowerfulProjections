@@ -74,6 +74,39 @@ RIGresponce = requests.get('https://graph.facebook.com/' + mrspowellsRIG + '?fie
 
 print(RIGresponce.text)
 #%%
+'''
+This chunk is ment to send a url to make an api call to facebook. 
+I will be building a while loop for in the next couple of code chunks 
+'''
+
+res = requests.get("https://graph.facebook.com/v13.0/"+ mrspowellsIF +"?fields=engagement%2Cfan_count%2Cfollowers_count%2Cid%2Cposts%7Bid%2Cmessage%2Ccomments%7Bcomment_count%2Cid%2Clikes%7Bid%7D%2Ccreated_time%7D%2Clikes%7Bid%7D%2Ccreated_time%7D&access_token=" + IFapikey)
+
+#%%
+res1 = dict(res.json())
+print(res1)
+#%%
+# selecting the post data
+res1['posts']['data']
+
+#%%
+# pulling out the paging link
+page_link = res1['posts']['paging']['next']
+
+#%%
+res2=requests.get(page_link)
+#%%
+res2 = dict(res2.json())
+#%%
+# this pulls out the next page link
+next_page = res2['paging']['next']
+#%%
+# this uses the next page link in a new get request
+res3 = requests.get(next_page)
+#%%
+res3 = dict(res3.json())
+#%%
+res3['paging']['next']
+#%%
 # trying to use the facebook sdk for python package to get post data from Mrs Powells
 graph = facebook.GraphAPI(access_token = IFapikey)
 fields = ['id','name', 'followers_count', 'posts']
