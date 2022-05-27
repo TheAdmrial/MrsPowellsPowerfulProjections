@@ -86,7 +86,7 @@ res1 = dict(res.json())
 print(res1)
 #%%
 # selecting the post data
-res1['posts']['data']
+res1['posts']['data'][1]['likes']['paging']['cursors']['after']
 
 #%%
 # pulling out the paging link
