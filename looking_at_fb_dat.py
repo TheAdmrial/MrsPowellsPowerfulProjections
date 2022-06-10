@@ -6,10 +6,12 @@ import os
 
 #%%
 path =os.getcwd()
-path = path+'/data/fb_data_test.csv'
+path = path+'/data/fb_test_dat.xlsx'
 
 #%%
-dat = pd.read_csv(path)
+# dat = pd.read_csv(path)
+# reading in the .xls file from facebook
+dat = pd.read_excel(path, sheet_name=0, header = 0, skiprows= lambda x:x in[1])
 #%%
 # making a data dictionary for the lifetime data columns
 dd_cols = dat.columns
