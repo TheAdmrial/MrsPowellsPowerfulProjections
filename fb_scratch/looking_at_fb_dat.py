@@ -14,10 +14,10 @@ path = path+'/data/fb_test_dat.xlsx'
 dat = pd.read_excel(path, sheet_name=0, header = 0, skiprows= lambda x:x in[1])
 #%%
 # making a data dictionary for the lifetime data columns
-dd_cols = dat.columns
+# dd_cols = dat.columns
 
 # this grabs the columns and the first row
-dd_defs = dat.iloc[0,8:52]
+# dd_defs = dat.iloc[0,8:52]
 
 # trying to make a dictionary for the column definitions 
 # dd_fb_dat = pd.DataFrame([dd_cols,dd_defs])
@@ -27,3 +27,18 @@ dat.info()
 #%%
 # looking at the posted column
 dat.Posted.head(5)
+
+#%% 
+dat.describe()
+#%%
+keeps = ['Post ID'
+        , 'Post Message'
+        , 'Type'
+        , 'Posted'
+        , 'Lifetime Post Total Reach'
+        , 'Lifetime Post organic reach'
+        , 'Lifetime Post Paid Reach'
+        , 'Lifetime Post Total Impressions'
+        , 'Lifetime Post Organic Impressions'
+        , 'Lifetime Post Paid Impressions']
+dat2 = dat.filter(items = keeps, axis = 1)
